@@ -4,10 +4,8 @@ import re
 import classes
 
 
-def open_file_and_check_name(name: str) -> tuple:
-    """Take as input username. Return tuple with 
-        AddressBook in which key is the name and value is the phone numbers 
-        and bool value True if name already exist in dataframe, False otherwise."""
+def open_file(filename) -> classes.AddressBook:
+    """Take as input filename. Return AddressBook"""
     try:
         with open("data.csv", encoding="utf-8") as file:
             reader = csv.DictReader(file)
@@ -25,9 +23,7 @@ def open_file_and_check_name(name: str) -> tuple:
     except FileNotFoundError:
         data = classes.AddressBook()
 
-    name_exists = bool(data.get(name))
-
-    return (data, name_exists)
+    return data
 
 
 def write_to_csv(ab: classes.AddressBook, file_path: str):

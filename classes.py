@@ -145,6 +145,20 @@ class AddressBook(UserDict):
     def change_record(self, name, new_record):
         self[new_record.name.value] = new_record
 
+    def search(self, field: str, text: str) -> list[Record]:
+        result = []
+        if field.lower() == "name":
+            for record in self.data.values():
+                if text in record.name.value:
+                    result.append(record)
+        elif field.lower() == "phone":
+            for record in self.data.values():
+                for phone in record.phones:
+                    if text in phone.value:
+                        result.append(record)
+                        break
+        return result
+
     def __iter__(self):
         self.current_page = 1
         self.page_size = 10

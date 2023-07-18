@@ -1,11 +1,9 @@
-import csv
 import os
 import platform
-import re
 import sys
 
 import classes
-from data_manager import open_file_and_check_name, write_to_csv
+from data_manager import open_file, write_to_csv
 
 
 commands = {}
@@ -50,7 +48,8 @@ def add(*args):
         else:
             raise classes.WrongDate
 
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if name_exists and phone_number:
         msg = data[name.value].add_phone(phone_number)
@@ -70,7 +69,8 @@ def add(*args):
 def days_to_birthday_handler(*args):
     """Take as input username and show the number of days until his birthday"""
     name = classes.Name(args[0])
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if not name_exists:
         return f"User {name} not found"
@@ -90,7 +90,8 @@ def change(*args):
     else:
         raise classes.WrongPhone
 
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if not name_exists:
         msg = f"Name {name} doesn`t exists. "\
@@ -121,7 +122,8 @@ def delete_user(*args):
     """Take as input username and delete that user"""
     name = classes.Name(args[0])
 
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if not name_exists:
         return f"Name {name} doesn`t exists."
@@ -139,7 +141,8 @@ def delete_phone(*args):
     name = classes.Name(args[0])
     phone = classes.Phone(args[1])
 
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if not name_exists:
         msg = f"Name {name} doesn`t exists."
@@ -173,7 +176,8 @@ def phone(*args):
     """Take as input username and show user`s phone number."""
     name = classes.Name(args[0])
 
-    data, name_exists = open_file_and_check_name(name.value)
+    data = open_file("data.csv")
+    name_exists = bool(data.get(name.value))
 
     if not name_exists:
         return f"Name {name} doesn`t exists. "\
@@ -191,22 +195,24 @@ def phone(*args):
 @input_error
 def show_all(*args):
     """Show all users."""
-    try:
-        with open("data.csv", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            data = classes.AddressBook()
-            for row in reader:
-                username = classes.Name(row["Name"])
-                phones_str = re.sub(r"\[|\]|\ ", "", row["Phone numbers"]).split(",")
-                phones = [classes.Phone(phone) for phone in phones_str]
-                birthday = classes.Birthday(row["Birthday"])
-                record = classes.Record(username, phones, birthday)
-                data[record.name.value] = record
+    return open_file("data.csv")
 
-    except FileNotFoundError:
-        data = classes.AddressBook()
 
-    return data
+@set_commands("search")
+@input_error
+def search_handler(*args):
+    """Take as input searched field(name or phone)
+    and the text to be found. Returns all found users"""
+    field = args[0]
+    text = args[1]
+    if field.lower() not in ("name", "phone"):
+        return f"Unknown field '{field}'.\nTo see more info enter 'help'"
+    ab = open_file("data.csv")
+    result = ab.search(field, text)
+    if not result:
+        return "There are no users matching"
+    return "\n".join([str(rec) for rec in result]) 
+    
         
 
 @set_commands("exit", "close", "good bye")
