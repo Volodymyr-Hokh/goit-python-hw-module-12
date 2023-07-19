@@ -3,7 +3,7 @@ import platform
 import sys
 
 import classes
-from data_manager import open_file, write_to_csv
+
 
 
 commands = {}
@@ -48,7 +48,7 @@ def add(*args):
         else:
             raise classes.WrongDate
 
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if name_exists and phone_number:
@@ -60,7 +60,7 @@ def add(*args):
         data.add_record(record)
         msg = f"User {name} added successfully."
 
-    write_to_csv(data, "data.csv")
+    data.write_to_csv("data.csv")
     return msg
 
 
@@ -69,7 +69,7 @@ def add(*args):
 def days_to_birthday_handler(*args):
     """Take as input username and show the number of days until his birthday"""
     name = classes.Name(args[0])
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if not name_exists:
@@ -90,7 +90,7 @@ def change(*args):
     else:
         raise classes.WrongPhone
 
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if not name_exists:
@@ -99,7 +99,7 @@ def change(*args):
     else:
         msg = data[name.value].change_phone(old_phone, new_phone)
 
-    write_to_csv(data, "data.csv")
+    data.write_to_csv("data.csv")
     return msg
 
 
@@ -122,7 +122,7 @@ def delete_user(*args):
     """Take as input username and delete that user"""
     name = classes.Name(args[0])
 
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if not name_exists:
@@ -130,7 +130,7 @@ def delete_user(*args):
     else:
         data.delete_record(name)
 
-    write_to_csv(data, "data.csv")
+    data.write_to_csv("data.csv")
     return f"User {name} deleted successfully."
 
 
@@ -141,7 +141,7 @@ def delete_phone(*args):
     name = classes.Name(args[0])
     phone = classes.Phone(args[1])
 
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if not name_exists:
@@ -149,7 +149,7 @@ def delete_phone(*args):
     else:
         msg = data[name.value].delete_phone(phone)
 
-    write_to_csv(data, "data.csv")
+    data.write_to_csv("data.csv")
     return msg
 
 
@@ -176,7 +176,7 @@ def phone(*args):
     """Take as input username and show user`s phone number."""
     name = classes.Name(args[0])
 
-    data = open_file("data.csv")
+    data = classes.AddressBook.open_file("data.csv")
     name_exists = bool(data.get(name.value))
 
     if not name_exists:
@@ -195,7 +195,7 @@ def phone(*args):
 @input_error
 def show_all(*args):
     """Show all users."""
-    return open_file("data.csv")
+    return classes.AddressBook.open_file("data.csv")
 
 
 @set_commands("search")
@@ -207,7 +207,7 @@ def search_handler(*args):
     text = args[1]
     if field.lower() not in ("name", "phone"):
         return f"Unknown field '{field}'.\nTo see more info enter 'help'"
-    ab = open_file("data.csv")
+    ab = classes.AddressBook.open_file("data.csv")
     result = ab.search(field, text)
     if not result:
         return "There are no users matching"

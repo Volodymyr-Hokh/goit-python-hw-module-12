@@ -1,4 +1,5 @@
 from collections import UserDict
+import csv
 from datetime import datetime, date
 import re
 
@@ -158,6 +159,38 @@ class AddressBook(UserDict):
                         result.append(record)
                         break
         return result
+    
+    @classmethod
+    def open_file(cls, filename):
+        """Take as input filename. Return AddressBook"""
+        try:
+            with open(filename, encoding="utf-8") as file:
+                reader = csv.DictReader(file)
+                data = cls()
+                for row in reader:
+                    username = Name(row["Name"])
+                    phones_str = re.sub(r"\[|\]|\ ", "",
+                                        row["Phone numbers"]).split(",")
+                    phones = [Phone(phone) for phone in phones_str]
+                    birthday = Birthday(row["Birthday"])
+
+                    record = Record(username, phones, birthday)
+                    data[record.name.value] = record
+        except FileNotFoundError:
+            data = cls()
+        return data
+
+    def write_to_csv(self, filename: str):
+        fieldnames = ["Name", "Phone numbers", "Birthday"]
+
+        with open(filename, "w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for record in self.data.values():
+                writer.writerow(
+                    {"Name": record.name,
+                    "Phone numbers": record.phones,
+                    "Birthday": record.birthday})
 
     def __iter__(self):
         self.current_page = 1
