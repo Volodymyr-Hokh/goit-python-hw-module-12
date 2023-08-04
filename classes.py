@@ -13,11 +13,8 @@ class WrongDate(Exception):
 
 
 class Field:
-    def __init__(self, value, required=False):
+    def __init__(self, value):
         self._value = value
-        self.required = required
-        if required and not value:
-            raise ValueError("Required field is not provided.")
 
     def __str__(self):
         return str(self._value)
@@ -30,6 +27,8 @@ class Field:
             return self._value == other.value
         return False
 
+    # Додав магічний метод __hash__ тому, що діти класу Field 
+    # можуть бути елементами множини(set)
     def __hash__(self):
         return hash(self._value)
     
@@ -48,6 +47,9 @@ class Phone(Field):
 
     @staticmethod
     def is_valid_phone(phone):
+        # Валідація номеру телефону відбувається за 
+        # допомогою регулярнго виразу, що означає: необов'язково +, потім цифра від 1 до 9 
+        # та 11 цифр від 0 до 9. Тобто валідними будуть такі номери +123456987456 та 123456987456, 
         match = re.search(r"^\+?[1-9][\d]{11}$", phone)
         return bool(match)
 
@@ -68,6 +70,8 @@ class Birthday(Field):
 
     @staticmethod
     def is_valid_date(date):
+        # Валідація дня народження є значно простішою, ніж номеру телефону. 
+        # Якщо ввід користувача перетворюється у об'єкт datetime то дата валідна
         try:
             datetime.strptime(str(date), "%d.%m.%Y")
             return True
@@ -93,6 +97,8 @@ class Record:
         self.birthday = birthday
 
     def __str__(self):
+        # Рядкове представлення Record у форматі 
+        # Володя: +123456987456, 23456987456. Birthday: 21.01.1978
         phones = ", ".join([str(phone) for phone in self.phones])
         birthday = f"Birthday: {self.birthday}" if self.birthday.value else ""
         return f"{self.name.value}: {phones}. {birthday}"
@@ -102,10 +108,14 @@ class Record:
 
     def add_phone(self, phone: Phone):
         self.phones.append(phone)
+        # Список телефонів приводиться до множини для того, щоб виключити можливість 
+        # повторення номеру телефону
         self.phones = list(set(self.phones))
         return f"Phone number {phone} for user {self.name.value} added successfully."
 
     def change_phone(self, old_number: Phone, new_number: Phone):
+        # У списку телефонів знаходиться індекс старого номера та змінює 
+        # old_number на new_number
         if old_number not in self.phones:
             return f"Number {old_number} not found."
         else:
@@ -129,6 +139,8 @@ class Record:
         
         today = date.today()
         birthday = birthday.replace(year=today.year)
+        # Якщо цього року вже був день народження, кількість днів рахується до наступного 
+        # дня народження
         if birthday < today:
             birthday = birthday.replace(year=today.year+1)
         result = (birthday - today).days
@@ -169,11 +181,15 @@ class AddressBook(UserDict):
                 data = cls()
                 for row in reader:
                     username = Name(row["Name"])
+                    # Формат csv не пітримує масивів. Тому для запису номерів телефону 
+                    # довелося користатися таким не дуже красивим способом: записувати 
+                    # телефони у як рядки
                     phones_str = re.sub(r"\[|\]|\ ", "",
                                         row["Phone numbers"]).split(",")
                     phones = [Phone(phone) for phone in phones_str]
                     birthday = Birthday(row["Birthday"])
-
+                    # Тут з усіх даних створюється Record та записується до data, 
+                    # що є екземпляром AddressBook
                     record = Record(username, phones, birthday)
                     data[record.name.value] = record
         except FileNotFoundError:
@@ -192,6 +208,10 @@ class AddressBook(UserDict):
                     "Phone numbers": record.phones,
                     "Birthday": record.birthday})
 
+
+
+    # Методи __iter__ та __next__ перетворюють елземпляри AddressBook на 
+    # ітератори, щоб користувачам показувати одночасно self.page_size записів
     def __iter__(self):
         self.current_page = 1
         self.page_size = 10

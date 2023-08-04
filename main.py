@@ -8,6 +8,10 @@ import classes
 from handlers import commands
 
 
+# Даний метод відповідає за автозаповнення команд. Якщо у консолі
+# ввести частину команди та натиснути tab то команда доповниться.
+# у разі, якщо більше однієї команди відповідають критеріям,
+# повернеться список усіх доступних команд
 def completer(text, state):
     if not text.isalpha():
         return None
@@ -20,6 +24,12 @@ def completer(text, state):
 
 
 def parse_command(user_input: str):
+    # Даний регулярний вираз шукає команди, що складаються більше, ніж з одного слова.
+    # Тобто це good bye, show all, del phone та del user.
+    # Якщо користувач ввів одну із цих команд, командою вважатимуться перші два слова,
+    # а аргументами - все, починаючи з третього. Я
+    # кщо ж команда складаєтсья з одного слова(блок else),
+    # то аргументами є все, починаючи з другого елементу
     match = re.search(
         r"^show\s|^good\s|^del\s", user_input.lower())
     try:
@@ -32,6 +42,13 @@ def parse_command(user_input: str):
     except IndexError:
         return "Please enter a command name."
 
+    # Тут обробляються випадки, коли користувач ввів нвідому команду.
+    # Якщо ввід схожий на існуючу команду, наприклад, chanle, то
+    # повернеться повідомлення: "Можливо Ви мали на увазі change"
+    # Якщо ж жодна із команд не буде достатньо подібною до
+    # вводу користувача(за це відповідає змінна match_ratio
+    # та коефіцієнт 60, виведений експерементальним шляхом),
+    # повернеться повідомлення про те що команду не знайдено.
     if user_command not in commands.keys():
         logging.basicConfig(level=logging.ERROR)
         best_match, match_ratio = process.extractOne(user_command,
@@ -46,6 +63,8 @@ def parse_command(user_input: str):
 
 
 def main():
+    # Ці дві лінійки безпосередньо пов'язані з функцією completer.
+    # Вони відповідають за те, при натисканні на яку кнопку відбуватиметься автодоповнення.
     readline.set_completer(completer)
     readline.parse_and_bind("tab: complete")
 
@@ -54,11 +73,14 @@ def main():
         result = parse_command(user_input)
 
         if result:
+            # Якщо повернули ітератор(тобто команда show all), проходимося по ньому в циклі,
+            #  поступово показуючи записи
             if isinstance(result, classes.AddressBook):
                 for page in result:
                     commands["clear"]()
                     print("\n".join([str(i) for i in page]))
-                    user_input = input("Press 'q' to quit. Press any key to see the next page: ")
+                    user_input = input(
+                        "Press 'q' to quit. Press any key to see the next page: ")
                     if user_input.lower() == "q":
                         break
             else:
